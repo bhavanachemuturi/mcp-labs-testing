@@ -1,0 +1,49 @@
+{
+  "name": "react-webpage",
+  "version": "1.0.0",
+  "description": "A basic React webpage",
+  "main": "index.js",
+  "scripts": {
+    "start": "react-app-rewired start",
+    "build": "react-app-rewired build",
+    "test": "react-app-rewired test",
+    "eject": "react-scripts eject"
+  },
+  "dependencies": {
+    "@carbon-labs/react-animated-header": "^0.54.0",
+    "@carbon-labs/react-processing": "^0.21.0",
+    "@carbon-labs/react-resizer": "^0.25.0",
+    "@carbon-labs/react-ui-shell": "^0.103.0",
+    "@carbon-labs/utilities": "^0.28.0",
+    "@carbon/ibm-products": "^2.92.1",
+    "@carbon/react": "^1.109.0",
+    "@carbon/styles": "^1.108.0",
+    "classnames": "^2.5.1",
+    "lodash.debounce": "^4.0.8",
+    "prop-types": "^15.8.1",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-scripts": "5.0.1",
+    "sass": "^1.101.0"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "devDependencies": {
+    "react-app-rewired": "^2.2.1"
+  }
+}
