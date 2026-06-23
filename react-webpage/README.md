@@ -4,15 +4,6 @@ A modern React web application featuring IBM's Carbon Design System components, 
 
 ## 🚀 Getting Started
 
-### Prerequisites
-
-Before you begin, ensure you have the following installed on your system:
-
-- **Node.js** (version 14.x or higher)
-  - Download from [nodejs.org](https://nodejs.org/)
-  - Verify installation: `node --version`
-- **npm** (comes with Node.js)
-  - Verify installation: `npm --version`
 
 ### Installation
 

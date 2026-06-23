@@ -4,7 +4,7 @@ import AnimatedHeaderPage from './pages/AnimatedHeaderPage';
 import WhatsNewPage from './pages/WhatsNewPage';
 import ResizerPage from './pages/ResizerPage';
 import ProcessingPage from './pages/ProcessingPage';
-import './App.css';
+import './App.scss';
 
 const tabs = [
   'UIShell',
@@ -34,6 +34,9 @@ function App() {
     }
   }, [activeTab]);
 
+  const isUIShell = activeTab === 'UIShell';
+  const isAnimatedHeader = activeTab === 'AnimatedHeader';
+
   return (
     <div className="App">
       <nav className="top-tabs" aria-label="Primary page navigation">
@@ -52,7 +55,13 @@ function App() {
         </div>
       </nav>
 
-      <main className="app-shell">{pageContent}</main>
+      {isUIShell ? (
+        <div className="uishell-fullbleed">{pageContent}</div>
+      ) : isAnimatedHeader ? (
+        <div className="animated-header-fullbleed">{pageContent}</div>
+      ) : (
+        <main className="app-shell">{pageContent}</main>
+      )}
     </div>
   );
 }
