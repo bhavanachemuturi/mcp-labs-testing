@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Processing } from '@carbon-labs/react-processing';
-import { Button } from '@carbon/react';
+import { Button, Theme } from '@carbon/react';
 
 /**
  * The Carbon Labs Processing animation is driven entirely by CSS that scopes
@@ -58,13 +58,16 @@ function SingleCycleProcessing({ active = false, theme = 'g100' }) {
 
 /* ─────────────────────────────────────────────────────────────────────────── */
 
-function ProcessingPage() {
+function ProcessingPage({ theme = 'g100' }) {
   const [looping1Active, setLooping1Active] = useState(true);
   const [singleActive, setSingleActive] = useState(false);
   const [task1Active, setTask1Active] = useState(true);
 
+  const isLight = theme === 'white' || theme === 'g10';
+
   return (
-    <div className="page-stack">
+    <Theme theme={theme}>
+    <div className={`page-stack${isLight ? ' page-stack--light' : ''}`}>
       <div className="hero-section">
         <p className="eyebrow">Carbon Labs</p>
         <h1>Processing</h1>
@@ -265,6 +268,7 @@ function ProcessingPage() {
         </ul>
       </section>
     </div>
+    </Theme>
   );
 }
 

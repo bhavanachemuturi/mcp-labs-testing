@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { Toggle } from '@carbon/react';
 import UIShellPage from './pages/UIShellPage';
 import AnimatedHeaderPage from './pages/AnimatedHeaderPage';
 import WhatsNewPage from './pages/WhatsNewPage';
@@ -14,31 +15,37 @@ const tabs = [
   'Processing',
 ];
 
+// Tabs that show the theme toggle
+const THEMED_TABS = new Set(['UIShell', 'WhatsNew', 'Resizer', 'Processing']);
+
 function App() {
   const [activeTab, setActiveTab] = useState('UIShell');
+  const [isDark, setIsDark] = useState(true);
+  const theme = isDark ? 'g100' : 'white';
 
   const pageContent = useMemo(() => {
     switch (activeTab) {
       case 'UIShell':
-        return <UIShellPage />;
+        return <UIShellPage theme={theme} />;
       case 'AnimatedHeader':
         return <AnimatedHeaderPage />;
       case 'WhatsNew':
-        return <WhatsNewPage />;
+        return <WhatsNewPage theme={theme} />;
       case 'Resizer':
-        return <ResizerPage />;
+        return <ResizerPage theme={theme} />;
       case 'Processing':
-        return <ProcessingPage />;
+        return <ProcessingPage theme={theme} />;
       default:
-        return <UIShellPage />;
+        return <UIShellPage theme={theme} />;
     }
-  }, [activeTab]);
+  }, [activeTab, theme]);
 
   const isUIShell = activeTab === 'UIShell';
   const isAnimatedHeader = activeTab === 'AnimatedHeader';
+  const showThemeToggle = THEMED_TABS.has(activeTab);
 
   return (
-    <div className="App">
+    <div className={`App${isDark ? ' App--dark' : ' App--light'}`}>
       <nav className="top-tabs" aria-label="Primary page navigation">
         <div className="top-tabs__inner">
           {tabs.map((tab) => (
@@ -52,6 +59,24 @@ function App() {
               {tab}
             </button>
           ))}
+
+          {showThemeToggle && (
+            <div className="top-tabs__theme-toggle">
+              <Toggle
+                id="theme-toggle"
+                labelText=""
+                hideLabel
+                labelA="Light"
+                labelB="Dark"
+                toggled={isDark}
+                onToggle={(checked) => setIsDark(checked)}
+                size="sm"
+              />
+              <span className="top-tabs__theme-label">
+                {isDark ? 'Dark' : 'Light'}
+              </span>
+            </div>
+          )}
         </div>
       </nav>
 
@@ -60,7 +85,7 @@ function App() {
       ) : isAnimatedHeader ? (
         <div className="animated-header-fullbleed">{pageContent}</div>
       ) : (
-        <main className="app-shell">{pageContent}</main>
+        <main className={`app-shell${isDark ? '' : ' app-shell--light'}`}>{pageContent}</main>
       )}
     </div>
   );

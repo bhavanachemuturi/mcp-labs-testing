@@ -3,6 +3,7 @@
 @use '@carbon-labs/react-processing/scss/processing';
 @use '@carbon-labs/react-animated-header/scss/animated-header';
 @use '@carbon-labs/react-ui-shell/scss/ui-shell';
+@use '@carbon-labs/react-whats-new/scss/whats-new';
 
 .App {
   min-height: 100vh;
@@ -10,6 +11,79 @@
     radial-gradient(circle at top left, rgba(120, 94, 240, 0.35), transparent 30%),
     linear-gradient(180deg, #161616 0%, #262626 100%);
   color: #f4f4f4;
+  transition: background 0.25s ease, color 0.25s ease;
+}
+
+/* Light mode — whole-app background flips */
+.App--light {
+  background:
+    radial-gradient(circle at top left, rgba(120, 94, 240, 0.12), transparent 30%),
+    linear-gradient(180deg, #f4f4f4 0%, #e0e0e0 100%);
+  color: #161616;
+
+  .top-tabs {
+    background: rgba(244, 244, 244, 0.92);
+    border-bottom-color: rgba(22, 22, 22, 0.1);
+  }
+
+  .top-tabs__button {
+    color: #525252;
+  }
+
+  .top-tabs__button:hover {
+    color: #161616;
+    background: rgba(0, 0, 0, 0.04);
+  }
+
+  .top-tabs__button--active {
+    color: #161616;
+    border-bottom-color: #0f62fe;
+  }
+
+  .top-tabs__theme-label {
+    color: #525252;
+  }
+
+  /* Light-mode app-shell panels */
+  .app-shell--light {
+    .page-panel,
+    .theme-showcase,
+    .demo-card {
+      background: rgba(255, 255, 255, 0.85);
+      border-color: rgba(22, 22, 22, 0.12);
+    }
+
+    .eyebrow,
+    .demo-label,
+    .status-label {
+      color: #0f62fe;
+    }
+
+    h1, h2, h3 {
+      color: #161616;
+    }
+
+    p, li {
+      color: #393939;
+    }
+
+    .rp-panel--blue { background: rgba(15, 98, 254, 0.1); }
+    .rp-panel--mid  { background: rgba(0, 0, 0, 0.04); }
+    .rp-panel--dim  { background: rgba(0, 0, 0, 0.03); }
+
+    .rp-panel__heading { color: #161616; }
+    .rp-panel__body    { color: #393939; }
+    .rp-panel__list    { color: #161616; }
+    .rp-section-header__desc { color: #525252; }
+
+    .proc-task {
+      background: #f4f4f4;
+      border-color: rgba(22, 22, 22, 0.1);
+    }
+
+    .proc-task__desc { color: #393939; }
+    .hero-copy, .page-panel p { color: #393939; }
+  }
 }
 
 .top-tabs {
@@ -27,8 +101,31 @@
   margin: 0 auto;
   padding: 0 1.5rem;
   display: flex;
+  align-items: center;
   gap: 0.5rem;
   overflow-x: auto;
+}
+
+/* Theme toggle — pinned to the right end of the tab bar */
+.top-tabs__theme-toggle {
+  margin-inline-start: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+  padding: 0 0.25rem;
+
+  /* Align the Carbon Toggle vertically with the tab buttons */
+  .cds--toggle__appearance {
+    margin: 0;
+  }
+}
+
+.top-tabs__theme-label {
+  font-size: 0.75rem;
+  color: #8d8d8d;
+  white-space: nowrap;
+  min-width: 2.5rem;
 }
 
 .top-tabs__button {
@@ -418,25 +515,26 @@
 
 /* ─────────────────────────────────────────────────────────────────────────
    Resizer Page — layout primitives
+   ─────────────────────────────────────────────────────────────────────────
+   KEY RULE: Never set background on .clabs__resizer or its parent with our
+   own classes. The Resizer component reads Carbon design tokens ($border-subtle,
+   $border-interactive) from the active Theme wrapper for its color.
+   Our custom className should only add layout properties (flex-shrink: 0,
+   display: flex for grip centering) — never background/color overrides.
    ───────────────────────────────────────────────────────────────────────── */
 
-/*
- * .rp-row  — flex row container (horizontal split)
- * .rp-col  — flex column container (vertical split)
- * Both must NOT set overflow: hidden on themselves because the Carbon Resizer
- * reaches into DOM siblings and sets inline width/height. Overflow hidden on
- * the *panels* prevents text from spilling out of shrunken cells.
- */
+/* flex row: panels side-by-side */
 .rp-row {
   display: flex;
   flex-direction: row;
   border-radius: 0.75rem;
   overflow: hidden;
-  background: rgba(0, 0, 0, 0.18);
+  background: var(--cds-layer, rgba(0, 0, 0, 0.12));
   box-sizing: border-box;
   width: 100%;
 }
 
+/* flex col: panels stacked */
 .rp-col {
   display: flex;
   flex-direction: column;
@@ -445,30 +543,12 @@
   width: 100%;
 }
 
-/* Two-column grid wrapper used by the Vertical Grid example */
-.rp-grid-2col {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0;
-  border-radius: 0.75rem;
-  overflow: hidden;
-  background: rgba(0, 0, 0, 0.18);
-  box-sizing: border-box;
-  width: 100%;
-}
-
 /*
  * .rp-panel — base panel
- *
- * Critical rules:
- *   box-sizing: border-box — the inline width/height the Resizer injects must
- *     include padding, otherwise content overflows the set pixel value.
- *   min-width / min-height: 0 — overrides the flex default of `auto`, which
- *     prevents a flex child from ever shrinking below its content size.
- *     Without this, text content causes the panel to ignore its assigned width.
- *   overflow: hidden — clips content that no longer fits after resizing.
- *   overflow-y: auto — allows the user to scroll when the panel is too short.
- *   word-break: break-word — prevents long words from overflowing narrow panels.
+ * box-sizing: border-box  — Resizer injects px widths; padding must be included.
+ * min-width/min-height: 0 — flex children won't shrink below content size without this.
+ * overflow-y: auto        — scroll when panel is too short.
+ * word-break: break-word  — prevents long tokens overflowing narrow panels.
  */
 .rp-panel {
   box-sizing: border-box;
@@ -482,197 +562,102 @@
   word-break: break-word;
 }
 
+/* Panel color variants — use Carbon layer tokens so they flip with Theme */
 .rp-panel--blue {
-  background: rgba(15, 98, 254, 0.14);
+  background: rgba(15, 98, 254, 0.12);
 }
 
 .rp-panel--mid {
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--cds-layer-02, rgba(255, 255, 255, 0.04));
 }
 
 .rp-panel--dim {
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--cds-layer-01, rgba(255, 255, 255, 0.02));
 }
 
-/* Panel typography */
+/* Panel typography — use Carbon text tokens */
 .rp-panel__heading {
   margin: 0 0 0.5rem;
   font-size: 1rem;
   font-weight: 600;
-  color: #f4f4f4;
-  /* Ensure the heading never forces the panel wider */
+  color: var(--cds-text-primary, #f4f4f4);
   overflow-wrap: break-word;
 }
+
+.rp-panel__heading--light { color: #161616; }
 
 .rp-panel__body {
   margin: 0 0 0.75rem;
   font-size: 0.875rem;
   line-height: 1.6;
-  color: #c6c6c6;
-  /* Allow long sentences to wrap rather than overflow */
+  color: var(--cds-text-secondary, #c6c6c6);
   overflow-wrap: break-word;
 }
+
+.rp-panel__body--light { color: #393939; }
 
 .rp-panel__list {
   padding-left: 1.1rem;
   margin: 0;
-  color: #f4f4f4;
+  color: var(--cds-text-primary, #f4f4f4);
   font-size: 0.875rem;
   line-height: 1.8;
 }
 
-/* Section header block above each demo */
-.rp-section-header {
-  margin-bottom: 1rem;
-}
+.rp-panel__list--light { color: #161616; }
+.rp-panel__list--light li { color: #393939; }
+
+/* Section header above each demo */
+.rp-section-header { margin-bottom: 1rem; }
 
 .rp-section-header__title {
   margin: 0.25rem 0 0.375rem;
   font-size: 1.25rem;
   font-weight: 600;
+  color: var(--cds-text-primary, #f4f4f4);
 }
 
 .rp-section-header__desc {
   margin: 0;
   font-size: 0.9375rem;
   line-height: 1.6;
-  color: #a8b2c1;
+  color: var(--cds-text-secondary, #a8b2c1);
 }
 
-/* ── Drag handle ─────────────────────────────────────────────────────────── */
+/* ── Custom grip variant ─────────────────────────────────────────────────── */
 /*
- * .rp-handle — the default Carbon Labs Resizer visual
- *
- * flex-shrink: 0 stops the handle strip from being absorbed by sibling panels.
+ * Only adds layout properties — NO background override so the Resizer's
+ * Carbon token colors remain intact.
  */
-.rp-handle {
-  flex-shrink: 0;
-  background: rgba(255, 255, 255, 0.12);
-  transition: background 0.15s ease;
-}
-
-.rp-handle:hover,
-.rp-handle:focus,
-.rp-handle:active {
-  background: #78a9ff;
-  outline: none;
-}
-
-/* Grip-icon variant */
-.rp-handle--grip {
+.rp-handle--grip-custom {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.1);
 }
 
-.rp-grip {
-  font-size: 1rem;
+.rp-grip-icon {
+  font-size: 1.25rem;
   line-height: 1;
-  letter-spacing: -0.1em;
-  color: rgba(255, 255, 255, 0.55);
+  color: var(--cds-icon-secondary, rgba(255, 255, 255, 0.55));
   user-select: none;
   pointer-events: none;
 }
 
-.rp-handle--grip:hover .rp-grip,
-.rp-handle--grip:focus .rp-grip {
-  color: #78a9ff;
+/* ── onResizeEnd badge ───────────────────────────────────────────────────── */
+.rp-callback-badge {
+  display: inline-block;
+  margin-bottom: 0.75rem;
+  padding: 0.375rem 0.875rem;
+  border-radius: 2rem;
+  font-size: 0.8125rem;
+  background: rgba(120, 169, 255, 0.12);
+  border: 1px solid rgba(120, 169, 255, 0.3);
+  color: var(--cds-text-primary, #f4f4f4);
+
+  strong { color: #78a9ff; }
 }
 
-/* Pill-shaped variant */
-.rp-handle--pill {
-  background: rgba(120, 169, 255, 0.18);
-  border-radius: 8px;
-}
-
-.rp-handle--pill:hover,
-.rp-handle--pill:focus {
-  background: rgba(120, 169, 255, 0.5);
-}
-
-/* Overlay handle sits on the left edge of the floating panel */
-.rp-handle--overlay-left {
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  cursor: ew-resize;
-  z-index: 2;
-}
-
-/* ── Overlay container ───────────────────────────────────────────────────── */
-.rp-overlay-container {
-  position: relative;
-  border-radius: 0.75rem;
-  overflow: hidden;
-  background: rgba(0, 0, 0, 0.18);
-  box-sizing: border-box;
-  width: 100%;
-}
-
-/* Background content fills the full container */
-.rp-overlay-bg {
-  box-sizing: border-box;
-  width: 100%;
-  height: 100%;
-  padding: 1.25rem;
-  overflow-y: auto;
-  word-break: break-word;
-}
-
-/* Overlay panel wrapper anchored to the right */
-.rp-overlay-panel-wrapper {
-  position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  display: flex;
-  flex-direction: row;
-  pointer-events: auto;
-  z-index: 10;
-}
-
-/* The floating overlay panel itself */
-.rp-overlay-panel {
-  position: relative;
-  display: flex;
-  flex-direction: row;
-  height: 100%;
-  box-sizing: border-box;
-  background: rgba(22, 22, 22, 0.92);
-  border-left: 1px solid rgba(255, 255, 255, 0.12);
-  backdrop-filter: blur(12px);
-  min-width: 0;
-  overflow: hidden;
-}
-
-.rp-overlay-panel__inner {
-  flex: 1;
-  min-width: 0;
-  padding: 1.25rem;
-  overflow-y: auto;
-  word-break: break-word;
-  box-sizing: border-box;
-}
-
-.rp-overlay-close {
-  appearance: none;
-  background: none;
-  border: none;
-  color: #c6c6c6;
-  font-size: 1rem;
-  cursor: pointer;
-  float: right;
-  padding: 0;
-  line-height: 1;
-  margin-bottom: 0.5rem;
-}
-
-.rp-overlay-close:hover {
-  color: #ffffff;
-}
-
+/* ── Unused overlay styles kept for reference ─────────────────────────────── */
 .rp-overlay-reopen {
   appearance: none;
   position: absolute;
@@ -824,14 +809,26 @@
 }
 
 /* ── Content area ────────────────────────────────────────────────────────── */
-/* cds--content already applies margin-inline-start: 256px (sidenav width).
-   We only need to push DOWN by the height of the Carbon header (3rem = 48px)
-   because .uishell-fullbleed itself starts below the tab bar.               */
+/*
+ * When the side nav is OPEN  → left margin = 256 px (sidenav width)
+ * When the side nav is CLOSED → left margin = 0 (no sidenav)
+ *
+ * We override the .cds--content class margin here so the class alone no longer
+ * hard-codes the indent — our modifier class controls it instead.
+ */
 .uishell-page-content {
   padding-block-start: 3rem !important; /* clear the fixed Carbon header */
   padding-inline: 2rem !important;
   padding-block-end: 4rem !important;
   min-height: calc(100vh - 6rem); /* tabs + header */
+  /* Default: nav collapsed → no left offset */
+  margin-inline-start: 0 !important;
+  transition: margin-inline-start 0.11s ease;
+}
+
+/* Nav expanded → push content right by the sidenav width (16rem = 256px) */
+.uishell-page-content--nav-open {
+  margin-inline-start: 16rem !important; /* 256 px sidenav */
 }
 
 /* ── Typography ─────────────────────────────────────────────────────────── */
@@ -949,6 +946,585 @@
   margin-top: auto;
   padding: 1rem;
   border-top: 1px solid var(--cds-border-subtle, #393939);
+}
+
+/* Made with Bob */
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   WhatsNew Page  (wnp-*)
+   Layout: two-column — sticky TOC sidebar + scrollable TocSections area
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/*
+ * The wnp-root fills the full viewport width for proper layout.
+ * No outer padding — padding lives on the left sidebar and sections.
+ */
+.wnp-root {
+  width: 100%;
+}
+
+/* ── Main two-column layout ───────────────────────────────────────────────── */
+/*
+ * Left column: 14rem sticky sidebar
+ * Right column: the TocSections scroll container (height set via inline style = 100vh - 3rem)
+ * No outer padding — left sidebar gets 1.5rem left padding; sections get right padding.
+ */
+.wnp-layout {
+  display: grid;
+  grid-template-columns: 14rem 1fr;
+  align-items: start;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── TOC sidebar ──────────────────────────────────────────────────────────── */
+.wnp-toc-sidebar {
+  /* Sticks at the very top — the TocSections column scrolls independently */
+  position: sticky;
+  top: 0;
+  padding: 2rem 1rem 2rem 1.5rem;
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  align-self: start;
+
+  @media (max-width: 768px) {
+    position: static;
+    border-right: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 1rem 1.5rem;
+  }
+}
+
+.wnp-toc-label {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #8d8d8d;
+  margin: 0 0 0.875rem;
+}
+
+/* ── TOC list — force full visible rendering ──────────────────────────────── */
+/*
+ * The clabs--whats-new__toc-list renders as a <nav> containing a <ul>.
+ * Without explicit styles the items collapse to zero height on our dark bg.
+ */
+.wnp-toc-sidebar .clabs--whats-new__toc-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+/*
+ * Each TocItem renders as an <li class="clabs--whats-new__toc-item">.
+ * We make the whole row a flex column so the name + description stack vertically.
+ */
+.wnp-toc-sidebar .clabs--whats-new__toc-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;        /* clear visual space between name and description */
+  border-left: 2px solid rgba(255, 255, 255, 0.14);
+  padding: 0.625rem 0.625rem 0.625rem 0.875rem;
+  margin-bottom: 0.375rem;
+  cursor: pointer;
+  border-radius: 0 3px 3px 0;
+  transition: background 0.15s ease, border-color 0.15s ease;
+  list-style: none;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-left-color: rgba(255, 255, 255, 0.45);
+  }
+}
+
+/* Section name — primary label */
+.wnp-toc-item-name {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #f4f4f4;
+  line-height: 1.4;
+  margin: 0;
+}
+
+/* Short description — secondary label */
+.wnp-toc-item-desc {
+  display: block;
+  font-size: 0.6875rem;
+  color: #8d8d8d;
+  line-height: 1.35;
+  margin: 0;
+}
+
+/* Active section highlight — Carbon Labs adds this class automatically */
+.wnp-toc-sidebar .clabs--whats-new__toc-item--active {
+  border-left-color: #78a9ff;
+  background: rgba(120, 169, 255, 0.09);
+
+  .wnp-toc-item-name {
+    color: #78a9ff;
+  }
+
+  .wnp-toc-item-desc {
+    color: rgba(120, 169, 255, 0.7);
+  }
+}
+
+/* ── Sections scroll area ─────────────────────────────────────────────────── */
+/*
+ * TocSections renders a <div> whose scroll position is the IntersectionObserver
+ * root. We give it a fixed height via inline style (calc(100vh - 3rem)) and
+ * set scroll-behavior: smooth + overscroll-behavior to kill the "bounce lag".
+ */
+.wnp-sections {
+  padding: 0 1.5rem 0 2rem;
+  scroll-behavior: smooth;
+  overscroll-behavior: contain;
+
+  @media (max-width: 768px) {
+    padding: 0 1rem;
+  }
+}
+
+/* Individual content sections */
+.wnp-section {
+  padding: 2.5rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+
+  &:last-child {
+    border-bottom: none;
+    padding-bottom: 4rem; /* breathing room at the bottom */
+  }
+}
+
+/* ── Hero (section 0) ─────────────────────────────────────────────────────── */
+.wnp-eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.75rem;
+  color: #a6c8ff;
+  margin-bottom: 0.75rem;
+}
+
+.wnp-hero-title {
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 300;
+  line-height: 1.1;
+  margin: 0 0 1rem;
+  color: #f4f4f4;
+}
+
+.wnp-hero-body {
+  font-size: 1.0625rem;
+  line-height: 1.6;
+  max-width: 42rem;
+  color: #c6c6c6;
+  margin: 0;
+}
+
+/* ── Section headings + body ────────────────────────────────────────────────── */
+.wnp-section-heading {
+  font-size: 1.375rem;
+  font-weight: 400;
+  margin: 0 0 0.875rem;
+  color: #f4f4f4;
+}
+
+.wnp-body {
+  font-size: 0.9375rem;
+  line-height: 1.65;
+  max-width: 44rem;
+  color: #c6c6c6;
+  margin-bottom: 1.25rem;
+}
+
+.wnp-link {
+  color: #78a9ff;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+/* ── Bubble section — feature badge grid ─────────────────────────────────── */
+.wnp-bubble-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: 0.25rem;
+}
+
+.wnp-feat-card {
+  position: relative;
+}
+
+.wnp-feat-badge {
+  appearance: none;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid var(--badge-color, #78a9ff);
+  background: rgba(120, 169, 255, 0.08);
+  border-radius: 2rem;
+  color: var(--badge-color, #78a9ff);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  transition: background 0.15s ease;
+
+  &:hover {
+    background: rgba(120, 169, 255, 0.16);
+  }
+}
+
+.wnp-feat-version {
+  font-size: 0.75rem;
+  opacity: 0.7;
+  font-weight: 400;
+}
+
+/* Bubble popup styling */
+.clabs--whats-new__bubble {
+  background: #262626 !important;
+  border: 1px solid rgba(255, 255, 255, 0.16) !important;
+  border-radius: 0.5rem !important;
+  max-width: 18rem !important;
+  z-index: 9000 !important;
+}
+
+.clabs--whats-new__bubble__header {
+  padding: 0.875rem 1rem 0.5rem !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.25rem !important;
+}
+
+.wnp-bubble-tag {
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #78a9ff;
+}
+
+.wnp-bubble-title {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #f4f4f4;
+}
+
+.wnp-bubble-body {
+  font-size: 0.8125rem;
+  line-height: 1.55;
+  color: #c6c6c6;
+  margin: 0;
+  padding: 0.75rem 1rem;
+}
+
+.wnp-bubble-close {
+  appearance: none;
+  background: none;
+  border: none;
+  color: #78a9ff;
+  font: inherit;
+  font-size: 0.8125rem;
+  cursor: pointer;
+  padding: 0.5rem 1rem 0.75rem;
+  width: 100%;
+  text-align: right;
+
+  &:hover {
+    color: #a6c8ff;
+  }
+}
+
+/* ── TOC section — anatomy table ─────────────────────────────────────────── */
+.wnp-toc-anatomy {
+  display: grid;
+  gap: 0;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.5rem;
+  overflow: hidden;
+  max-width: 44rem;
+}
+
+.wnp-anatomy-row {
+  display: grid;
+  grid-template-columns: 10rem 1fr;
+  gap: 1rem;
+  align-items: start;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  @media (max-width: 500px) {
+    grid-template-columns: 1fr;
+    gap: 0.25rem;
+  }
+}
+
+.wnp-anatomy-name {
+  font-family: 'IBM Plex Mono', 'Menlo', monospace;
+  font-size: 0.8125rem;
+  color: #78a9ff;
+  background: rgba(120, 169, 255, 0.1);
+  padding: 0.15em 0.4em;
+  border-radius: 3px;
+  white-space: nowrap;
+  align-self: start;
+}
+
+.wnp-anatomy-desc {
+  font-size: 0.875rem;
+  line-height: 1.55;
+  color: #c6c6c6;
+}
+
+/* ── ViewStack carousel ──────────────────────────────────────────────────── */
+.wnp-vs-dots {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.wnp-vs-dot {
+  appearance: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 0;
+  background: rgba(255, 255, 255, 0.22);
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.2s ease, transform 0.2s ease;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.45);
+  }
+}
+
+.wnp-vs-dot--active {
+  background: #78a9ff;
+  transform: scale(1.35);
+}
+
+.wnp-vs-frame {
+  border-radius: 0.75rem;
+  overflow: hidden;
+
+  /* The ViewStack renders a div.clabs--whats-new__view-stack — give it height */
+  .clabs--whats-new__view-stack {
+    min-height: 240px;
+    outline: none;
+  }
+
+  /* Each View is a list item inside a <ul> */
+  .clabs--whats-new__view-stack > ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    position: relative;
+    min-height: 240px;
+  }
+
+  .clabs--whats-new__view {
+    min-height: 240px;
+  }
+}
+
+.wnp-vs-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1.75rem 2rem;
+  min-height: 240px;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.04) 0%,
+    rgba(255, 255, 255, 0.02) 100%
+  );
+  border-left: 3px solid var(--card-accent, #78a9ff);
+}
+
+.wnp-vs-tag {
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #8d8d8d;
+}
+
+.wnp-vs-title {
+  font-size: 1.5rem;
+  font-weight: 400;
+  margin: 0;
+  color: #f4f4f4;
+}
+
+.wnp-vs-body {
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  color: #c6c6c6;
+  max-width: 38rem;
+  margin: 0;
+  flex: 1;
+}
+
+.wnp-vs-version {
+  font-size: 0.8125rem;
+  font-family: 'IBM Plex Mono', 'Menlo', monospace;
+  font-weight: 600;
+  margin-top: auto;
+}
+
+.wnp-vs-controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.wnp-vs-btn {
+  appearance: none;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 0.375rem;
+  color: #c6c6c6;
+  font: inherit;
+  font-size: 0.875rem;
+  padding: 0.5rem 1.125rem;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+
+  &:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.1);
+    color: #f4f4f4;
+  }
+
+  &:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+}
+
+.wnp-vs-counter {
+  font-size: 0.875rem;
+  color: #8d8d8d;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   WhatsNew Page — Light mode overrides  (.wnp-root--light)
+   Applied when theme='white' | 'g10' via the Carbon <Theme> wrapper.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.wnp-root--light {
+  /* TOC sidebar */
+  .wnp-toc-sidebar {
+    border-right-color: rgba(22, 22, 22, 0.1);
+  }
+
+  .wnp-toc-label { color: #6f6f6f; }
+
+  .wnp-toc-sidebar .clabs--whats-new__toc-item {
+    border-left-color: rgba(22, 22, 22, 0.14);
+
+    &:hover {
+      background: rgba(0, 0, 0, 0.04);
+      border-left-color: rgba(22, 22, 22, 0.4);
+    }
+  }
+
+  .wnp-toc-sidebar .clabs--whats-new__toc-item--active {
+    border-left-color: #0f62fe;
+    background: rgba(15, 98, 254, 0.07);
+
+    .wnp-toc-item-name { color: #0f62fe; }
+  }
+
+  .wnp-toc-item-name { color: #161616; }
+  .wnp-toc-item-desc { color: #6f6f6f; }
+
+  /* Sections */
+  .wnp-section { border-bottom-color: rgba(22, 22, 22, 0.1); }
+  .wnp-eyebrow { color: #0f62fe; }
+  .wnp-hero-title { color: #161616; }
+  .wnp-hero-body { color: #393939; }
+  .wnp-section-heading { color: #161616; }
+  .wnp-body { color: #393939; }
+
+  .wnp-link { color: #0f62fe; }
+
+  /* Anatomy table */
+  .wnp-toc-anatomy { border-color: rgba(22, 22, 22, 0.12); }
+
+  .wnp-anatomy-row {
+    background: rgba(0, 0, 0, 0.025);
+    border-bottom-color: rgba(22, 22, 22, 0.08);
+  }
+
+  .wnp-anatomy-name {
+    color: #0f62fe;
+    background: rgba(15, 98, 254, 0.08);
+  }
+
+  .wnp-anatomy-desc { color: #393939; }
+
+  /* Bubble badges */
+  .wnp-feat-badge {
+    background: rgba(15, 98, 254, 0.06);
+  }
+
+  .clabs--whats-new__bubble {
+    background: #ffffff !important;
+    border-color: rgba(22, 22, 22, 0.16) !important;
+  }
+
+  .wnp-bubble-tag { color: #0f62fe; }
+  .wnp-bubble-title { color: #161616; }
+  .wnp-bubble-body { color: #393939; }
+  .wnp-bubble-close { color: #0f62fe; }
+
+  /* ViewStack card */
+  .wnp-vs-card {
+    background: linear-gradient(
+      135deg,
+      rgba(0, 0, 0, 0.03) 0%,
+      rgba(0, 0, 0, 0.01) 100%
+    );
+    border-left: 3px solid var(--card-accent, #0f62fe);
+  }
+
+  .wnp-vs-tag   { color: #6f6f6f; }
+  .wnp-vs-title { color: #161616; }
+  .wnp-vs-body  { color: #393939; }
+
+  .wnp-vs-dot { background: rgba(22, 22, 22, 0.2); }
+
+  .wnp-vs-btn {
+    background: rgba(0, 0, 0, 0.05);
+    border-color: rgba(22, 22, 22, 0.18);
+    color: #393939;
+
+    &:hover:not(:disabled) {
+      background: rgba(0, 0, 0, 0.09);
+      color: #161616;
+    }
+  }
+
+  .wnp-vs-frame {
+    .clabs--whats-new__view-stack,
+    .clabs--whats-new__view-stack > ul {
+      background: rgba(0, 0, 0, 0.02);
+    }
+  }
 }
 
 /* Made with Bob */

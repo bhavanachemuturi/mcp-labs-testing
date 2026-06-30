@@ -14,6 +14,7 @@
     "@carbon-labs/react-processing": "^0.21.0",
     "@carbon-labs/react-resizer": "^0.25.0",
     "@carbon-labs/react-ui-shell": "^0.103.0",
+    "@carbon-labs/react-whats-new": "^0.28.0",
     "@carbon-labs/utilities": "^0.28.0",
     "@carbon/ibm-products": "^2.92.1",
     "@carbon/react": "^1.109.0",

@@ -52,12 +52,14 @@ const NAV_TABS = [
   { id: 'accessibility', label: 'Accessibility' },
 ];
 
-function UIShellPage() {
+function UIShellPage({ theme = 'g100' }) {
   const [isSideNavExpanded, setIsSideNavExpanded] = useState(true);
   const [activeNav, setActiveNav] = useState('purpose');
 
+  const isLight = theme === 'white' || theme === 'g10';
+
   return (
-    <Theme theme="g100">
+    <Theme theme={theme}>
       {/* ─────────────────────────────────────────────────────────────────
           Header  (Carbon: position:fixed, z-index:8000)
           ───────────────────────────────────────────────────────────────── */}
@@ -178,7 +180,8 @@ function UIShellPage() {
       <SideNav
         aria-label="Side navigation"
         expanded={isSideNavExpanded}
-        isPersistent
+        isFixedNav
+        isChildOfHeader={false}
         onOverlayClick={() => setIsSideNavExpanded(false)}>
         <SideNavItems>
           <SideNavTitle>Products</SideNavTitle>
@@ -221,7 +224,7 @@ function UIShellPage() {
           cds--content supplies margin-inline-start: 256px (sidenav width)
           uishell-page-content adds the top padding to clear the fixed header
           ───────────────────────────────────────────────────────────────── */}
-      <main className="cds--content uishell-page-content">
+      <main className={`cds--content uishell-page-content${isSideNavExpanded ? ' uishell-page-content--nav-open' : ''}`}>
         {activeNav === 'purpose' && (
           <>
             <h1>Purpose and function</h1>
